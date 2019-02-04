@@ -2,7 +2,7 @@
 # Author: aurelien.esnard@u-bordeaux.fr
 
 from world import *
-from colony import *
+from ants import *
 import pygame
 
 ################################################################################

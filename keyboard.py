@@ -2,13 +2,6 @@
 # Author: aurelien.esnard@u-bordeaux.fr
 
 import pygame
-from world import *
-
-################################################################################
-#                          KEYBOARD CONTROLLER                                 #
-################################################################################
-
-
 
 ### Class KeyboardController ###
 
@@ -26,8 +19,6 @@ class KeyboardController:
                 cont = False
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 cont = False
-            # elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
-            #     cont = self.evm.keyboard_drop_bomb()
             # don't continue?
             if not cont: return False
 

@@ -3,7 +3,7 @@
 # Author: aurelien.esnard@u-bordeaux.fr
 
 from world import *
-from colony import *
+from ants import *
 from view import *
 from keyboard import *
 import sys
