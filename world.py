@@ -5,10 +5,8 @@ import random
 import sys
 import numpy
 
-### Constants ###
-
-DEFAULT_WIDTH = 400
-DEFAULT_HEIGHT = 400
+MAX_PHEROMONE = 1200
+DECAY_PHEROMONE = 2
 
 ### Class world ###
 
@@ -20,6 +18,7 @@ class World:
         self.height = height
         self.block = numpy.zeros((height, width))
         self.food = numpy.zeros((height, width))
+        self.pheromone = numpy.zeros((height, width))
 
     def isValidPos(self, pos):
         if pos[0] >= self.width or pos[0] < 0 or pos[1] >= self.height or pos[1] < 0:
@@ -73,6 +72,21 @@ class World:
             if self.block[y][x] == 0:
                 return (x, y)
 
+    def addPheromone(self, pos, level):
+        x = pos[0]
+        y = pos[1]
+        self.pheromone[y][x] += level
+        if self.pheromone[y][x] > MAX_PHEROMONE:
+            self.pheromone[y][x] = MAX_PHEROMONE
+
+    def decayPheromone(self):
+        for y in range(self.height):
+            for x in range(self.width):
+                self.pheromone[y][x] -= DECAY_PHEROMONE
+                if self.pheromone[y][x] <= 0:
+                    self.pheromone[y][x] = 0
+
     # update world at each clock tick
-    # def tick(self, dt):
-    #     # TODO: nop
+    def tick(self, dt):
+        self.decayPheromone()
+        pass

@@ -18,24 +18,30 @@ print("pygame version: ", pygame.version.ver)
 #                                 MAIN                                         #
 ################################################################################
 
-width = DEFAULT_WIDTH
-height = DEFAULT_HEIGHT
+width = 120
+height = 120
+turn = 0
 
 # parse arguments
-if len(sys.argv) == 3:
-    width = int(sys.argv[1])
-    height = int(sys.argv[2])
+if len(sys.argv) == 2:
+    turn = int(sys.argv[1])
+elif len(sys.argv) == 4:
+    turn = int(sys.argv[1])
+    width = int(sys.argv[2])
+    height = int(sys.argv[3])
+else:
+    print("Usage: ./main.py [turn [width height]]")
 
 # initialization
 pygame.display.init()
 pygame.font.init()
 clock = pygame.time.Clock()
 world = World(width, height)
-# world.addBlock((int(width/2)-40, int(height/2)+40), (60, 10))
+world.addBlock((int(width/2)-40, int(height/2)+40), (60, 10))
 world.addFood((0, 0), (20, 20))
-# world.addFood((width-20, 0), (20, 20))
-# world.addFood((0, height-20), (20, 20))
-# world.addFood((width-20, height-20), (20, 20))
+world.addFood((width-20, 0), (20, 20))
+world.addFood((0, height-20), (20, 20))
+world.addFood((width-20, height-20), (20, 20))
 colony = AntColony(world, (int(width/2), int(height/2)))
 colony.addAnts(10)
 
@@ -48,8 +54,10 @@ while True:
     dt = clock.tick(FPS)
     if not kb.tick(dt):
         break
-    # world.tick(dt)
+    world.tick(dt)
     colony.tick(dt)
+    turn += 1
+    print("{} {}".format(turn, colony.food))
     view.tick(dt)
 
 # quit

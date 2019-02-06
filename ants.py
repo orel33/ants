@@ -8,12 +8,12 @@ import math
 
 ### Constants ###
 
-# Directions X and Y are clockwise ordered. Direction 0 corresponds to going up and to the left.
 DIRX = [-1, 0, 1, 1, 1, 0, -1, -1]
 DIRY = [-1, -1, -1, 0, 1, 1,  1,  0]
-ANGLE = [-135, -90, -45, 0, 45, 90, 135, 180]
 NBDIRS = 8
 
+PERTURBATION = math.pi / 4
+PHEROMONE_DROP = 450
 SEARCH = 0
 BACK = 1
 
@@ -25,7 +25,7 @@ class AntBrain:
         self.world = world
         self.colony = colony
         self.ant = ant
-        self.heading = None # angle in radian
+        self.heading = None # angle in radian relative to the colony position
         self.mode = SEARCH
 
     def swapMode(self):
@@ -43,17 +43,16 @@ class AntBrain:
                 break
         return direction
 
-    # given a target position, find the best discrete direction
+    # compute the discrete direction that minimize the distance from the target position
     def targetPos(self, targetpos):
         if self.ant.pos == targetpos:
             return -1
         mindist = float("inf")
         bestdir = -1
         for i in range(NBDIRS):
-            newpos = numpy.array(
-                [self.ant.pos[0] + DIRX[i], self.ant.pos[1] + DIRY[i]])
-            tgtpos = numpy.array([targetpos[0], targetpos[1]])
-            dist = numpy.linalg.norm(tgtpos-newpos)
+            dx = self.ant.pos[0] + DIRX[i] - targetpos[0]
+            dy = self.ant.pos[1] + DIRY[i] - targetpos[1]
+            dist = math.sqrt(dx*dx + dy*dy)
             if dist < mindist:
                 mindist = dist
                 bestdir = i
@@ -62,35 +61,40 @@ class AntBrain:
     def targetDir(self, angle):
         homepos = self.ant.home()
         r = max(self.world.width, self.world.height)
+        # angle += (random.random()-0.5)*PERTURBATION
         vec = (r*math.cos(angle), r*math.sin(angle))
         targetpos = (homepos[0] + vec[0], homepos[1] + vec[1])
         return self.targetPos(targetpos)
 
     def act(self):
-        direction = -1
 
         # seach mode
         if self.mode == SEARCH:
             if self.heading == None:
                 self.heading = random.random()*2*math.pi
             direction = self.targetDir(self.heading)
-            # direction = self.randomDir()
+            ok = self.ant.move(direction)
+            if not ok:
+                direction = self.randomDir()
+                self.ant.move(direction)
+                # self.heading = None
+            if self.ant.onFood():
+                self.ant.takeFood()
+                self.swapMode()
+                return
 
         # back mode
         if self.mode == BACK:
             self.heading = None
             direction = self.targetPos(self.ant.home())
-
-        # 2) move forward in this direction
-        ok = self.ant.move(direction)
-        if not ok:
-            self.heading = None
-
-        # 3) swap mode
-        if self.mode == SEARCH and self.ant.onFood():
-            self.swapMode()
-        elif self.mode == BACK and self.ant.atHome():
-            self.swapMode()
+            ok = self.ant.move(direction)
+            if not ok:
+                return
+            self.ant.dropPheromone()
+            if self.ant.atHome():
+                self.ant.releaseFood()
+                self.swapMode()
+                return
 
 ### Class Ant ###
 
@@ -123,12 +127,23 @@ class Ant:
     def home(self):
         return self.colony.pos
 
-    # def takeFood(self):
-    #     if(self.food == 0 and self.world.isFood(self.pos)):
-    #         self.world.food[self.pos[1]][self.pos[0]] -= 1
-    #         self.food = 1
-    #         return True
-    #     return False
+    def takeFood(self):
+        if(self.food == 0 and self.onFood()):
+            self.world.food[self.pos[1]][self.pos[0]] -= 1
+            self.food = 1
+            return True
+        return False
+
+    def releaseFood(self):
+        if(self.food == 1 and self.atHome()):
+            self.food = 0
+            self.colony.food += 1
+            return True
+        return False
+
+    def dropPheromone(self):
+        self.world.addPheromone(self.pos, PHEROMONE_DROP) # /2
+        # drops = (PHEROMONE_DROP/2)/nbNeighbors()
 
     def tick(self, dt):
         self.brain.act()
@@ -141,6 +156,7 @@ class AntColony:
         self.world = world
         self.pos = pos
         self.ants = []
+        self.food = 0
 
     def addAnt(self):
         ant = Ant(self.world, self)
@@ -149,7 +165,7 @@ class AntColony:
 
     def addAnts(self, nb):
         for _ in range(nb):
-            ant = self.addAnt()
+            self.addAnt()
 
     def tick(self, dt):
         for ant in self.ants:

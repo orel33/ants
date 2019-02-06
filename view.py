@@ -11,8 +11,8 @@ import pygame
 
 ### Constants ###
 
-PIXELSIZE = 2
-FPS = 30
+PIXELSIZE = 4
+FPS = 10
 WIN_TITLE = "Ant Simulator"
 YELLOW = (255, 255, 0)
 BLUE = (0, 0, 255)
@@ -42,28 +42,27 @@ class GraphicView:
     # render world
     def renderWorld(self):
         self.win.fill(WHITE)
+        # draw colony home
+        pygame.draw.rect(self.win, GREEN, pygame.Rect((self.colony.pos[0]*PIXELSIZE, self.colony.pos[1]*PIXELSIZE), (PIXELSIZE, PIXELSIZE)))
         # draw block and food
         for y in range(0, self.world.height):
             for x in range(0, self.world.width):
-                if(self.world.food[y][x] == 1):
+                if(self.world.food[y][x] > 0):
                     pygame.draw.rect(self.win, RED, pygame.Rect((x*PIXELSIZE, y*PIXELSIZE), (PIXELSIZE, PIXELSIZE)))
-                if(self.world.block[y][x] == 1):
+                elif(self.world.block[y][x] > 0):
                     pygame.draw.rect(self.win, BLACK, pygame.Rect((x*PIXELSIZE, y*PIXELSIZE), (PIXELSIZE, PIXELSIZE)))
-        # draw colony home
-        pygame.draw.rect(self.win, GREEN, pygame.Rect((self.colony.pos[0]*PIXELSIZE, self.colony.pos[1]*PIXELSIZE), (PIXELSIZE, PIXELSIZE)))
+                elif(self.world.pheromone[y][x] > 0):
+                    pygame.draw.rect(self.win, YELLOW, pygame.Rect((x*PIXELSIZE, y*PIXELSIZE), (PIXELSIZE, PIXELSIZE)))
 
-    def renderAnt(self, ant):
-        x = ant.pos[0]
-        y = ant.pos[1]
-        pygame.draw.rect(self.win, BLUE, pygame.Rect((x*PIXELSIZE, y*PIXELSIZE), (PIXELSIZE, PIXELSIZE)))
-
-    def renderColony(self, colony):
-        for ant in colony.ants:
-            self.renderAnt(ant)
+    def renderAnts(self):
+        for ant in self.colony.ants:
+            x = ant.pos[0]
+            y = ant.pos[1]
+            pygame.draw.rect(self.win, BLUE, pygame.Rect((x*PIXELSIZE, y*PIXELSIZE), (PIXELSIZE, PIXELSIZE)))
 
     # render PyGame graphic view at each clock tick
     def tick(self, dt):
         self.renderWorld()
-        self.renderColony(self.colony)
+        self.renderAnts()
         pygame.display.flip()
 
