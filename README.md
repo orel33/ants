@@ -20,6 +20,7 @@ To install the *PyGame* library (user privilege enough):
 
 ```
   $ pip3 install pygame
+  $ pip3 install colour
 ```
 
 To start the game:

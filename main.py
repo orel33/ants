@@ -37,13 +37,13 @@ pygame.display.init()
 pygame.font.init()
 clock = pygame.time.Clock()
 world = World(width, height)
-world.addBlock((int(width/2)-40, int(height/2)+40), (60, 10))
+world.addBlock((int(width/2)-20, int(height/2)+20), (40, 5))
 world.addFood((0, 0), (20, 20))
 world.addFood((width-20, 0), (20, 20))
 world.addFood((0, height-20), (20, 20))
 world.addFood((width-20, height-20), (20, 20))
-colony = AntColony(world, (int(width/2), int(height/2)))
-colony.addAnts(10)
+colony = AntColony(world)
+colony.addAnts(100)
 
 kb = KeyboardController()
 view = GraphicView(world, colony)
@@ -57,7 +57,7 @@ while True:
     world.tick(dt)
     colony.tick(dt)
     turn += 1
-    print("{} {}".format(turn, colony.food))
+    print("{} {}".format(turn, colony.food()))
     view.tick(dt)
 
 # quit
