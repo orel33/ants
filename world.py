@@ -22,9 +22,19 @@ class World:
         self.food = numpy.zeros((height, width))
 
     def isValidPos(self, pos):
-        if self.block[pos[1]][pos[0]] != 0:
+        if pos[0] >= self.width or pos[0] < 0 or pos[1] >= self.height or pos[1] < 0:
             return False
-        if pos[0] >= self.width or pos[0] < 0 or pos[1] > self.height or pos[1] < 0:
+        if self.isBlock(pos):
+            return False
+        return True
+
+    def isBlock(self, pos):
+        if self.block[pos[1]][pos[0]] == 0:
+            return False
+        return True
+
+    def isFood(self, pos):
+        if self.food[pos[1]][pos[0]] == 0:
             return False
         return True
 
