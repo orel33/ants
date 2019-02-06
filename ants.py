@@ -1,78 +1,11 @@
 # -*- coding: Utf-8 -*
 # Author: aurelien.esnard@u-bordeaux.fr
 
+from constants import *
 from world import *
 import random
 import numpy
 import math
-
-### Constants ###
-
-DIRS = [(-1, -1), (0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0)]
-NBDIRS = 8
-
-PERTURBATION = math.pi / 4
-PHEROMONE_DROP = 450
-FOOD_CAPACITY = 1
-SEARCH = 0
-BACK = 1
-
-### Auxiliary Functions ###
-
-
-def distance(pos0, pos1):
-    dx = pos1[0] - pos0[0]
-    dy = pos1[1] - pos0[1]
-    return math.sqrt(dx*dx + dy*dy)
-
-# compute the discrete direction that minimize the distance from the target position
-
-
-def targetPos(world, antpos, targetpos):
-    if antpos == targetpos:
-        return -1
-    mindist = float("inf")
-    bestdir = -1
-    for i in range(NBDIRS):
-        neighborpos = (antpos[0] + DIRS[i][0], antpos[1] + DIRS[i][1])
-        dist = distance(neighborpos, targetpos)
-        if dist < mindist:
-            mindist = dist
-            bestdir = i
-    return bestdir
-
-
-def targetDir(world, homepos, antpos, angle):
-    r = max(world.width(), world.height())
-    # angle += (random.random()-0.5)*PERTURBATION
-    vec = (r*math.cos(angle), r*math.sin(angle))
-    targetpos = (homepos[0] + vec[0], homepos[1] + vec[1])
-    return targetPos(world, antpos, targetpos)
-
-
-def randomDir(world, antpos):
-    while True:
-        direction = random.randint(0, NBDIRS - 1)
-        newpos = (antpos[0] + DIRS[direction][0],
-                  antpos[1] + DIRS[direction][1])
-        if(world.isValidPos(newpos)):
-            break
-    return direction
-
-
-def pheromoneDir(world, antpos, homepos):
-    antdist = distance(homepos, antpos)
-    maxpheromone = 0
-    bestdir = -1
-    for i in range(NBDIRS):
-        neighborpos = (antpos[0] + DIRS[i][0], antpos[1] + DIRS[i][1])
-        pheromone = world.getPheromone(neighborpos)
-        neighbordist = distance(homepos, neighborpos)
-        if(neighbordist > antdist):
-            if(pheromone > maxpheromone):
-                maxpheromone = pheromone
-                bestdir = i
-    return bestdir
 
 ### Class AntBrain ###
 
@@ -83,7 +16,8 @@ class AntBrain:
         self.__world = world
         self.__colony = colony
         self.__ant = ant
-        self.__heading = None  # angle in radian relative to the colony position
+        # self.__heading = None  # angle in radian relative to the colony position
+        self.__targetpos = None
         self.__mode = SEARCH
 
     def swapMode(self):
@@ -95,23 +29,30 @@ class AntBrain:
     def act(self):
         # seach mode
         if self.__mode == SEARCH:
-            if self.__heading == None:
-                self.__heading = random.random()*2*math.pi
-            direction = targetDir(
-                self.__world, self.__ant.home(), self.__ant.pos(), self.__heading)
-            ok = self.__ant.move(direction)
-            if not ok:
-                direction = randomDir(self.__world, self.__ant.pos())
-                self.__ant.move(direction)
+            if self.__targetpos == None or self.__targetpos == self.__ant.pos():
+                self.__targetpos = randomPos(self.__world)
+            direction = targetPos(self.__world, self.__ant.pos(), self.__targetpos)
+            self.__ant.move(direction)
+            # if self.__heading == None:
+            #     self.__heading = random.random()*2*math.pi
+            # direction = targetDir(
+            #     self.__world, self.__ant.home(), self.__ant.pos(), self.__heading)
+            # ok = self.__ant.move(direction)
+            # if not ok:
+            #     direction = randomDir(self.__world, self.__ant.pos())
+            #     self.__ant.move(direction)
             if self.__ant.onFood():
                 self.__ant.takeFood()
                 self.swapMode()
                 return
-
-            # if self.__ant.onPheromone():
-            #     direction = pheromoneDir(self.__world, self.__ant.pos(), self.__ant.home())
-            #     self.__ant.move(direction)
-            #     return
+            if self.__ant.nearFood():
+                pass
+            if self.__ant.onPheromone():
+                direction = pheromoneDir(self.__world, self.__ant.pos(), self.__ant.home())
+                self.__ant.move(direction)
+                return
+            if self.__ant.nearPheromone():
+                pass
 
         # back mode
         if self.__mode == BACK:

@@ -1,12 +1,75 @@
 # -*- coding: Utf-8 -*
 # Author: aurelien.esnard@u-bordeaux.fr
 
+from constants import *
 import random
 import sys
 import numpy
+import math
 
-MAX_PHEROMONE = 1200
-DECAY_PHEROMONE = 2
+### Auxiliary Functions ###
+
+def distance(pos0, pos1):
+    dx = pos1[0] - pos0[0]
+    dy = pos1[1] - pos0[1]
+    return math.sqrt(dx*dx + dy*dy)
+
+# compute the discrete direction that minimize the distance from the target position
+
+
+def targetPos(world, antpos, targetpos):
+    if antpos == targetpos:
+        return -1
+    mindist = float("inf")
+    bestdir = -1
+    for i in range(NBDIRS):
+        neighborpos = (antpos[0] + DIRS[i][0], antpos[1] + DIRS[i][1])
+        dist = distance(neighborpos, targetpos)
+        if dist < mindist:
+            mindist = dist
+            bestdir = i
+    return bestdir
+
+
+# def targetDir(world, homepos, antpos, angle):
+#     r = max(world.width(), world.height())
+#     # angle += (random.random()-0.5)*PERTURBATION
+#     vec = (r*math.cos(angle), r*math.sin(angle))
+#     targetpos = (homepos[0] + vec[0], homepos[1] + vec[1])
+#     return targetPos(world, antpos, targetpos)
+
+
+def randomDir(world, antpos):
+    while True:
+        direction = random.randint(0, NBDIRS - 1)
+        newpos = (antpos[0] + DIRS[direction][0],
+                  antpos[1] + DIRS[direction][1])
+        if(world.isValidPos(newpos)):
+            break
+    return direction
+
+
+def pheromoneDir(world, antpos, homepos):
+    antdist = distance(homepos, antpos)
+    maxpheromone = 0
+    bestdir = -1
+    for i in range(NBDIRS):
+        neighborpos = (antpos[0] + DIRS[i][0], antpos[1] + DIRS[i][1])
+        pheromone = world.getPheromone(neighborpos)
+        neighbordist = distance(homepos, neighborpos)
+        if(neighbordist > antdist):
+            if(pheromone > maxpheromone):
+                maxpheromone = pheromone
+                bestdir = i
+    return bestdir
+
+
+def randomPos(world):
+    while True:
+        x = random.randint(0, world.width()-1)
+        y = random.randint(0, world.height()-1)
+        if not world.isBlock((x,y)):
+            return (x, y)
 
 ### Class world ###
 
@@ -47,7 +110,7 @@ class World:
 
     def addBlock(self, pos=None, dim=None):
         if pos is None: 
-            pos = self.randomPos()
+            pos = randomPos(self)
         if dim is None:
             dim = (10, 10)
         posx = pos[0]
@@ -60,7 +123,7 @@ class World:
 
     def addFood(self, pos, dim=(1, 1), level=1):
         if pos is None:
-            pos = self.randomPos()
+            pos = randomPos(self)
         if dim is None:
             dim = (10, 10)
         for y in range(dim[1]):
@@ -73,13 +136,6 @@ class World:
         self.__food[pos[1]][pos[0]] -= level
         if self.__food[pos[1]][pos[0]] < 0:
             self.__food[pos[1]][pos[0]] = 0
-
-    def randomPos(self):
-        while True:
-            x = random.randint(0, self.__width-1)
-            y = random.randint(0, self.__height-1)
-            if self.__block[y][x] == 0:
-                return (x, y)
 
     def addPheromone(self, pos, level):
         x = pos[0]
