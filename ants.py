@@ -16,9 +16,11 @@ class AntBrain:
         self.__world = world
         self.__colony = colony
         self.__ant = ant
-        # self.__heading = None  # angle in radian relative to the colony position
         self.__targetpos = None
         self.__mode = SEARCH
+
+    def mode(self):
+        return self.__mode
 
     def swapMode(self):
         if(self.__mode == SEARCH):
@@ -26,44 +28,65 @@ class AntBrain:
         else:
             self.__mode = SEARCH
 
+    def searchFood(self):
+        self.__mode = SEARCH
+        direction = -1
+
+        if self.__ant.nearFood():
+            direction = foodDir(self.__world, self.__ant.pos())
+        elif self.__ant.onPheromone():
+            direction = pheromoneDir(
+                self.__world, self.__ant.pos(), self.__ant.home())
+        elif self.__ant.nearPheromone():
+            direction = pheromoneDir(
+                self.__world, self.__ant.pos(), self.__ant.home())
+        elif self.__targetpos == None or self.__targetpos == self.__ant.pos():
+        # elif self.__targetpos == None:
+            self.__targetpos = randomPos(self.__world)
+            print("select new target position = ({},{})".format(
+                self.__targetpos[0], self.__targetpos[1]))
+            direction = targetDir(
+                self.__world, self.__ant.pos(), self.__targetpos)
+        else:
+            direction = targetDir(
+                self.__world, self.__ant.pos(), self.__targetpos)
+
+        # move your body
+        if direction not in range(NBDIRS):
+            direction = randomDir(self.__world, self.__ant.pos())
+        ok = self.__ant.move(direction)
+        if not ok:
+            print("I cannot move... help me!")
+        # newpos = self.__ant.pos()
+        # print("new position = ({},{})".format(newpos[0], newpos[1]))
+        return self.__ant.onFood()
+
+    def backHome(self):
+        self.__mode = BACK
+        direction = -1
+        direction = targetDir(
+            self.__world, self.__ant.pos(), self.__ant.home())
+
+        # move your body
+        if direction not in range(NBDIRS):
+            direction = randomDir(self.__world, self.__ant.pos())
+        self.__ant.move(direction)
+        self.__ant.dropPheromone()
+
+        return self.__ant.atHome()
+
     def act(self):
+
         # seach mode
         if self.__mode == SEARCH:
-            if self.__targetpos == None or self.__targetpos == self.__ant.pos():
-                self.__targetpos = randomPos(self.__world)
-            direction = targetPos(self.__world, self.__ant.pos(), self.__targetpos)
-            self.__ant.move(direction)
-            # if self.__heading == None:
-            #     self.__heading = random.random()*2*math.pi
-            # direction = targetDir(
-            #     self.__world, self.__ant.home(), self.__ant.pos(), self.__heading)
-            # ok = self.__ant.move(direction)
-            # if not ok:
-            #     direction = randomDir(self.__world, self.__ant.pos())
-            #     self.__ant.move(direction)
-            if self.__ant.onFood():
+            if self.searchFood():
                 self.__ant.takeFood()
                 self.swapMode()
                 return
-            if self.__ant.nearFood():
-                pass
-            if self.__ant.onPheromone():
-                direction = pheromoneDir(self.__world, self.__ant.pos(), self.__ant.home())
-                self.__ant.move(direction)
-                return
-            if self.__ant.nearPheromone():
-                pass
 
         # back mode
         if self.__mode == BACK:
-            self.__heading = None
-            direction = targetPos(
-                self.__world, self.__ant.pos(), self.__ant.home())
-            ok = self.__ant.move(direction)
-            if not ok:
-                return
-            self.__ant.dropPheromone()
-            if self.__ant.atHome():
+            if self.backHome():
                 self.__ant.releaseFood()
                 self.swapMode()
                 return
@@ -80,6 +103,9 @@ class Ant:
         self.__brain = AntBrain(world, colony, self)
         self.__food = 0
 
+    def brain(self):
+        return self.__brain
+
     def pos(self):
         return self.__pos
 
@@ -94,7 +120,7 @@ class Ant:
         newpos = (newposx, newposy)
         if not self.__world.isValidPos(newpos):
             return False
-        self.__pos = newpos  # (newposx, newposy)
+        self.__pos = newpos
         return True
 
     def onFood(self):
@@ -163,6 +189,8 @@ class AntColony:
         self.__pos = pos
         self.__ants = []
         self.__food = 0
+        print("=> add colony home at position ({},{})".format(
+            pos[0], pos[1]))
 
     def pos(self):
         return self.__pos

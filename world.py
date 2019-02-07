@@ -6,6 +6,7 @@ import random
 import sys
 import numpy
 import math
+import bresenham
 
 ### Auxiliary Functions ###
 
@@ -16,20 +17,38 @@ def distance(pos0, pos1):
 
 # compute the discrete direction that minimize the distance from the target position
 
+# def targetDir(world, antpos, targetpos):
+#     if antpos == targetpos:
+#         return -1
+#     mindist = float("inf")
+#     bestdir = -1
+#     for i in range(NBDIRS):
+#         neighborpos = (antpos[0] + DIRS[i][0], antpos[1] + DIRS[i][1])
+#         if not world.isValidPos(neighborpos):
+#             continue
+#         dist = distance(neighborpos, targetpos)
+#         if dist < mindist:
+#             mindist = dist
+#             bestdir = i
+#     return bestdir
 
-def targetPos(world, antpos, targetpos):
+def targetDir(world, antpos, targetpos):
     if antpos == targetpos:
         return -1
-    mindist = float("inf")
+    b = bresenham.bresenham(antpos[0],antpos[1],targetpos[0],targetpos[1])
+    nextpos = next(b)
+    if(nextpos == antpos):
+        nextpos = next(b)
+    # find direction
     bestdir = -1
     for i in range(NBDIRS):
         neighborpos = (antpos[0] + DIRS[i][0], antpos[1] + DIRS[i][1])
-        dist = distance(neighborpos, targetpos)
-        if dist < mindist:
-            mindist = dist
+        if not world.isValidPos(neighborpos):
+            continue
+        if nextpos == neighborpos:
             bestdir = i
+            break
     return bestdir
-
 
 # def targetDir(world, homepos, antpos, angle):
 #     r = max(world.width(), world.height())
@@ -55,6 +74,8 @@ def pheromoneDir(world, antpos, homepos):
     bestdir = -1
     for i in range(NBDIRS):
         neighborpos = (antpos[0] + DIRS[i][0], antpos[1] + DIRS[i][1])
+        if not world.isValidPos(neighborpos):
+            continue
         pheromone = world.getPheromone(neighborpos)
         neighbordist = distance(homepos, neighborpos)
         if(neighbordist > antdist):
@@ -63,12 +84,24 @@ def pheromoneDir(world, antpos, homepos):
                 bestdir = i
     return bestdir
 
+def foodDir(world, antpos):
+    maxfood = 0
+    bestdir = -1
+    for i in range(NBDIRS):
+        neighborpos = (antpos[0] + DIRS[i][0], antpos[1] + DIRS[i][1])
+        if not world.isValidPos(neighborpos):
+            continue
+        food = world.getFood(neighborpos)
+        if(food > maxfood):
+                maxfood = food
+                bestdir = i
+    return bestdir
 
 def randomPos(world):
     while True:
         x = random.randint(0, world.width()-1)
         y = random.randint(0, world.height()-1)
-        if not world.isBlock((x,y)):
+        if world.isValidPos((x,y)):
             return (x, y)
 
 ### Class world ###

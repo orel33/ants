@@ -15,18 +15,26 @@ import colour
 PIXELSIZE = 4
 FPS = 10
 WIN_TITLE = "Ant Simulator"
-YELLOW = (255, 255, 0)
-BLUE = (0, 0, 255)
-GREEN = (0, 255, 0)
-RED = (255, 0, 0)
-WHITE = (255, 255, 255)
-BLACK = (0, 0, 0)
 
-# COLOR1 = colour.Color("yellow")
+### Colors ###
+
+
+def color2rgb(colorstr):
+    color = colour.Color(colorstr)
+    return (int(color.red*255), int(color.green*255), int(color.blue*255))
+
+YELLOW = color2rgb("yellow")
+BLUE = color2rgb("blue")
+GREEN = color2rgb("limegreen")
+RED = color2rgb("red")
+MAGENTA = color2rgb("magenta")
+WHITE = color2rgb("white")
+BLACK = color2rgb("black")
+
 COLOR1 = colour.Color("gold")
-# COLOR2 = colour.Color("darkorange")
 COLOR2 = colour.Color("orangered")
 COLORS = list(COLOR1.range_to(COLOR2, MAX_PHEROMONE))
+
 
 ### class GraphicView ###
 
@@ -48,8 +56,8 @@ class GraphicView:
     def getPheromoneColor(self, pos):
         level = self.__world.getPheromone(pos)
         if(level == 0):
-            color = colour.Color("white")
-        elif(level >= MAX_PHEROMONE):
+            return WHITE
+        if(level >= MAX_PHEROMONE):
             color = COLOR2
         else:
             color = COLORS[level]
@@ -80,10 +88,15 @@ class GraphicView:
         ants = self.__colony.getAnts()
         for ant in ants:
             antpos = ant.pos()
-            pygame.draw.rect(self.__win, BLUE, pygame.Rect(
+            if ant.brain().mode() == SEARCH:
+                antcolor = BLUE
+            else:
+                antcolor = MAGENTA
+            pygame.draw.rect(self.__win, antcolor, pygame.Rect(
                 (antpos[0]*PIXELSIZE, antpos[1]*PIXELSIZE), (PIXELSIZE, PIXELSIZE)))
 
     # render PyGame graphic view at each clock tick
+
     def tick(self, dt):
         self.renderWorld()
         self.renderAnts()

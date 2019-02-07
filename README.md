@@ -6,27 +6,26 @@ This is a simple *Ant Colony Simulation* game written in Python 3, based on the 
 
 First clone the project available on GitHUB under GPL:
 
-```
-  $ git clone https://github.com/orel33/ants
+```bash
+git clone https://github.com/orel33/ants
 ```
 
 To install Python (root privilege required):
 
-```
-  $ sudo apt get install python3 pip3
+```bash
+sudo apt get install python3 pip3
 ```
 
-To install the *PyGame* library (user privilege enough):
+To install the *PyGame* module and other useful modules (user privilege enough):
 
-```
-  $ pip3 install pygame
-  $ pip3 install colour
+```bash
+pip3 install pygame colour bresenham
 ```
 
 To start the game:
 
-```
-  $ python3 ./main.py
+```bash
+./main.py
 ```
 
 ## Known Bugs ##
