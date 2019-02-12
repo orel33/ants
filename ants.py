@@ -18,62 +18,105 @@ class AntBrain:
         self.__ant = ant
         self.__targetpos = None
         self.__mode = SEARCH
+        self.__escsteps = 0
+        self.__regsteps = 0
+        self.__negsteps = 0
 
     def mode(self):
         return self.__mode
 
-    def swapMode(self):
-        if(self.__mode == SEARCH):
-            self.__mode = BACK
-        else:
-            self.__mode = SEARCH
-
+    ### search food ###
     def searchFood(self):
         self.__mode = SEARCH
+
+        # select next direction
         direction = -1
-
         if self.__ant.nearFood():
+            self.__targetpos = None
             direction = foodDir(self.__world, self.__ant.pos())
+            # print("I am near food in direction {}".format(direction))
         elif self.__ant.onPheromone():
-            direction = pheromoneDir(
-                self.__world, self.__ant.pos(), self.__ant.home())
+            self.__targetpos = None
+            direction = pheromoneDir(self.__world, self.__ant.pos(), self.__ant.home(), True)
+            # print("I follow pheromone in direction {}".format(direction))
         elif self.__ant.nearPheromone():
-            direction = pheromoneDir(
-                self.__world, self.__ant.pos(), self.__ant.home())
+            self.__targetpos = None
+            direction = pheromoneDir(self.__world, self.__ant.pos(), self.__ant.home(), False)
+            # print("I'am near pheromone in direction {}".format(direction))
         elif self.__targetpos == None or self.__targetpos == self.__ant.pos():
-        # elif self.__targetpos == None:
+            self.__escsteps = 0
             self.__targetpos = randomPos(self.__world)
-            print("select new target position = ({},{})".format(
-                self.__targetpos[0], self.__targetpos[1]))
-            direction = targetDir(
-                self.__world, self.__ant.pos(), self.__targetpos)
+            direction = targetDir(self.__world, self.__ant.pos(), self.__targetpos)
         else:
-            direction = targetDir(
-                self.__world, self.__ant.pos(), self.__targetpos)
+            direction = targetDir(self.__world, self.__ant.pos(), self.__targetpos)
 
-        # move your body
-        if direction not in range(NBDIRS):
+        # check direction
+        if direction == -1:
+            self.__regsteps = 0
+            self.__negsteps += 1
             direction = randomDir(self.__world, self.__ant.pos())
-        ok = self.__ant.move(direction)
-        if not ok:
-            print("I cannot move... help me!")
-        # newpos = self.__ant.pos()
-        # print("new position = ({},{})".format(newpos[0], newpos[1]))
+        else:
+            self.__regsteps += 1
+            if self.__regsteps == 4:
+                self.__negsteps = 0
+        # direction = rotateDir(self.__world, self.__ant.pos(), direction)
+
+        # move ant in the selected direction
+        self.__ant.move(direction)
+
         return self.__ant.onFood()
 
+    ### back home ###
     def backHome(self):
         self.__mode = BACK
         direction = -1
-        direction = targetDir(
-            self.__world, self.__ant.pos(), self.__ant.home())
+        self.__targetpos = None
+        direction = targetDir(self.__world, self.__ant.pos(), self.__ant.home())
+
+        if direction == -1:
+            # print("I am back to home, but I need an escape!!!")
+            self.__regsteps = 0
+            self.__negsteps += 1
+            direction = randomDir(self.__world, self.__ant.pos())
+        else:
+            self.__regsteps += 1
+            if self.__regsteps == 4:
+                self.__negsteps = 0
 
         # move your body
-        if direction not in range(NBDIRS):
-            direction = randomDir(self.__world, self.__ant.pos())
-        self.__ant.move(direction)
-        self.__ant.dropPheromone()
+        if self.__ant.move(direction):
+            self.__ant.dropPheromone()
 
         return self.__ant.atHome()
+
+    ### search escape ###
+    def searchEscape(self):
+        self.__mode = ESCAPE
+        direction = -1
+
+        if self.__escsteps == 0 or self.__targetpos == None: # or self.__targetpos == self.__ant.pos():
+            self.__targetpos = randomPos(self.__world)
+
+        direction = targetDir(self.__world, self.__ant.pos(), self.__targetpos)
+
+        # if direction == -1:
+        #     self.__targetpos = None
+        #     print("I need a better escape !!!!")
+
+        # direction = rotateDir(self.__world, self.__ant.pos(), direction)
+
+        if direction == -1:
+            direction = randomDir(self.__world, self.__ant.pos())
+
+        # move your body
+        self.__ant.move(direction)
+        self.__escsteps += 1
+
+        if self.__escsteps == MAX_STEP:
+            return True
+
+        return False
+
 
     def act(self):
 
@@ -81,18 +124,37 @@ class AntBrain:
         if self.__mode == SEARCH:
             if self.searchFood():
                 self.__ant.takeFood()
-                self.swapMode()
-                return
+                self.__mode = BACK
+            elif self.__negsteps >= 4:
+                print("I need to escape !!!")
+                self.__escsteps = 0
+                self.__mode = ESCAPE
+            return
 
         # back mode
         if self.__mode == BACK:
             if self.backHome():
                 self.__ant.releaseFood()
-                self.swapMode()
-                return
+                self.__mode = SEARCH
+            elif self.__negsteps >= 4:
+                print("I need to escape !!!")
+                self.__escsteps = 0
+                self.__mode = ESCAPE
+            return
+
+        # escape mode
+        if self.__mode == ESCAPE:
+            if self.searchEscape():
+                self.__escsteps = 0
+                self.__negsteps = 0
+                self.__regsteps = 0
+                if self.__ant.food() > 0:
+                    self.__mode = BACK
+                else:
+                    self.__mode = SEARCH
+            return
 
 ### Class Ant ###
-
 
 class Ant:
 
@@ -179,7 +241,6 @@ class Ant:
         self.__brain.act()
 
 ### Class AntColony ###
-
 
 class AntColony:
     def __init__(self, world, pos=None):

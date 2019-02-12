@@ -23,6 +23,9 @@ def color2rgb(colorstr):
     color = colour.Color(colorstr)
     return (int(color.red*255), int(color.green*255), int(color.blue*255))
 
+# https://pypi.org/project/colour/
+# https://www.w3.org/TR/css-color-3/#svg-color
+
 YELLOW = color2rgb("yellow")
 BLUE = color2rgb("blue")
 GREEN = color2rgb("limegreen")
@@ -31,8 +34,10 @@ MAGENTA = color2rgb("magenta")
 WHITE = color2rgb("white")
 BLACK = color2rgb("black")
 
-COLOR1 = colour.Color("gold")
-COLOR2 = colour.Color("orangered")
+# COLOR1 = colour.Color("gold")
+# COLOR2 = colour.Color("orangered")
+COLOR1 = colour.Color("yellow")
+COLOR2 = colour.Color("gold")
 COLORS = list(COLOR1.range_to(COLOR2, MAX_PHEROMONE))
 
 
@@ -90,6 +95,8 @@ class GraphicView:
             antpos = ant.pos()
             if ant.brain().mode() == SEARCH:
                 antcolor = BLUE
+            elif ant.brain().mode() == ESCAPE:
+                antcolor = GREEN
             else:
                 antcolor = MAGENTA
             pygame.draw.rect(self.__win, antcolor, pygame.Rect(

@@ -10,32 +10,24 @@ import bresenham
 
 ### Auxiliary Functions ###
 
+
 def distance(pos0, pos1):
     dx = pos1[0] - pos0[0]
     dy = pos1[1] - pos0[1]
     return math.sqrt(dx*dx + dy*dy)
 
-# compute the discrete direction that minimize the distance from the target position
 
-# def targetDir(world, antpos, targetpos):
-#     if antpos == targetpos:
-#         return -1
-#     mindist = float("inf")
-#     bestdir = -1
-#     for i in range(NBDIRS):
-#         neighborpos = (antpos[0] + DIRS[i][0], antpos[1] + DIRS[i][1])
-#         if not world.isValidPos(neighborpos):
-#             continue
-#         dist = distance(neighborpos, targetpos)
-#         if dist < mindist:
-#             mindist = dist
-#             bestdir = i
-#     return bestdir
+def isValidDir(world, antpos, antdir):
+    newpos = (antpos[0] + DIRS[antdir][0], antpos[1] + DIRS[antdir][1])
+    if world.isValidPos(newpos):
+        return True
+    return False
+
 
 def targetDir(world, antpos, targetpos):
     if antpos == targetpos:
         return -1
-    b = bresenham.bresenham(antpos[0],antpos[1],targetpos[0],targetpos[1])
+    b = bresenham.bresenham(antpos[0], antpos[1], targetpos[0], targetpos[1])
     nextpos = next(b)
     if(nextpos == antpos):
         nextpos = next(b)
@@ -50,12 +42,20 @@ def targetDir(world, antpos, targetpos):
             break
     return bestdir
 
-# def targetDir(world, homepos, antpos, angle):
-#     r = max(world.width(), world.height())
-#     # angle += (random.random()-0.5)*PERTURBATION
-#     vec = (r*math.cos(angle), r*math.sin(angle))
-#     targetpos = (homepos[0] + vec[0], homepos[1] + vec[1])
-#     return targetPos(world, antpos, targetpos)
+
+def rotateDir(world, antpos, antdir):
+    if antdir == -1:
+        return -1
+    clockwise = 2 * random.randint(0, 1) - 1
+    # r = random.randint(0, 4) # uniform distribution
+    p = random.random()
+    for r in range(5):
+        if(p <= PROBASUM[r]):
+            break
+    newdir = (antdir + clockwise * r) % NBDIRS
+    if isValidDir(world, antpos, newdir):
+        return newdir
+    return antdir
 
 
 def randomDir(world, antpos):
@@ -68,7 +68,7 @@ def randomDir(world, antpos):
     return direction
 
 
-def pheromoneDir(world, antpos, homepos):
+def pheromoneDir(world, antpos, homepos, optdist):
     antdist = distance(homepos, antpos)
     maxpheromone = 0
     bestdir = -1
@@ -78,11 +78,14 @@ def pheromoneDir(world, antpos, homepos):
             continue
         pheromone = world.getPheromone(neighborpos)
         neighbordist = distance(homepos, neighborpos)
-        if(neighbordist > antdist):
-            if(pheromone > maxpheromone):
-                maxpheromone = pheromone
-                bestdir = i
+        if((not optdist) and (pheromone > maxpheromone)):
+            maxpheromone = pheromone
+            bestdir = i
+        if(optdist and (pheromone > maxpheromone) and (neighbordist > antdist)):
+            maxpheromone = pheromone
+            bestdir = i
     return bestdir
+
 
 def foodDir(world, antpos):
     maxfood = 0
@@ -93,15 +96,16 @@ def foodDir(world, antpos):
             continue
         food = world.getFood(neighborpos)
         if(food > maxfood):
-                maxfood = food
-                bestdir = i
+            maxfood = food
+            bestdir = i
     return bestdir
+
 
 def randomPos(world):
     while True:
         x = random.randint(0, world.width()-1)
         y = random.randint(0, world.height()-1)
-        if world.isValidPos((x,y)):
+        if world.isValidPos((x, y)):
             return (x, y)
 
 ### Class world ###
@@ -142,7 +146,7 @@ class World:
         return self.__pheromone[pos[1]][pos[0]]
 
     def addBlock(self, pos=None, dim=None):
-        if pos is None: 
+        if pos is None:
             pos = randomPos(self)
         if dim is None:
             dim = (10, 10)
