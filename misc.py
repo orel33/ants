@@ -1,7 +1,7 @@
 # -*- coding: Utf-8 -*
 # Author: aurelien.esnard@u-bordeaux.fr
 
-DEBUG = 0
+from constants import DEBUG
 
 ### Misc ###
 
