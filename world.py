@@ -100,6 +100,15 @@ def foodDir(world, antpos):
             bestdir = i
     return bestdir
 
+def randomTargetPos(world, antpos, dist = 0):
+    if dist == 0:
+        dist = max(world.width(),world.height())
+    while True:
+        dx = random.randint(-dist, dist)
+        dy = random.randint(-dist, dist)
+        if dx != 0 and dy != 0:
+            break
+    return (antpos[0] + dx, antpos[1] + dy)
 
 def randomPos(world):
     while True:

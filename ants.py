@@ -16,14 +16,22 @@ class AntBrain:
         self.__world = world
         self.__colony = colony
         self.__ant = ant
-        self.__targetpos = None
-        self.__mode = SEARCH
-        self.__escsteps = 0
-        self.__regsteps = 0
-        self.__negsteps = 0
+        self.__mode = SEARCH        # current mode in [SEARCH, BACK, ESCAPE]
+        self.__state = UNDEFINED    # current ant state
+        self.__steps = 0            # nb steps done in current mode
+        self.__lastpos = None       # last ant position
+        self.__targetpos = None     # set target position
+        self.__enabledrop = True    # enable to drop pheromone (or not)
+
 
     def mode(self):
         return self.__mode
+
+    def setMode(self, mode):
+        self.__mode = mode
+        self.__state = UNDEFINED
+        self.__steps = 0
+        self.__targetpos = None
 
     ### search food ###
     def searchFood(self):
@@ -33,126 +41,124 @@ class AntBrain:
         direction = -1
         if self.__ant.nearFood():
             self.__targetpos = None
+            self.__state = NEAR_FOOD
             direction = foodDir(self.__world, self.__ant.pos())
-            # print("I am near food in direction {}".format(direction))
+            print("I am near food in direction {}".format(direction))
         elif self.__ant.onPheromone():
+            self.__state = ON_PHEROMONE
             self.__targetpos = None
-            direction = pheromoneDir(self.__world, self.__ant.pos(), self.__ant.home(), True)
-            # print("I follow pheromone in direction {}".format(direction))
+            direction = pheromoneDir(
+                self.__world, self.__ant.pos(), self.__ant.home(), True)
+            print("I follow pheromone in direction {}".format(direction))
         elif self.__ant.nearPheromone():
+            self.__state = NEAR_PHEROMONE
             self.__targetpos = None
-            direction = pheromoneDir(self.__world, self.__ant.pos(), self.__ant.home(), False)
-            # print("I'am near pheromone in direction {}".format(direction))
-        elif self.__targetpos == None or self.__targetpos == self.__ant.pos():
-            self.__escsteps = 0
-            self.__targetpos = randomPos(self.__world)
+            direction = pheromoneDir(
+                self.__world, self.__ant.pos(), self.__ant.home(), False)
+            print("I'am near pheromone in direction {}".format(direction))
+        # global search
+        elif self.__steps == 0:
+            self.__state = FIRST_STEP
+            print("I setup new target position for global search...")
+            self.__targetpos = randomTargetPos(self.__world, self.__ant.pos())
+            direction = targetDir(self.__world, self.__ant.pos(), self.__targetpos)
+        # local search
+        elif self.__targetpos == self.__ant.pos():
+            self.__state = TARGET_REACHED
+            print("Target reached!!! I setup new target position for local search...")
+            self.__targetpos = randomTargetPos(self.__world, self.__ant.pos(), LOCAL_SEARCH_DIST)
+            direction = targetDir(self.__world, self.__ant.pos(), self.__targetpos)
+        # local search
+        elif self.__targetpos == None:
+            self.__state = NO_TARGET
+            print("No target anymore!!! I setup new target position for local search...")
+            self.__targetpos = randomTargetPos(self.__world, self.__ant.pos(), LOCAL_SEARCH_DIST)
             direction = targetDir(self.__world, self.__ant.pos(), self.__targetpos)
         else:
+            self.__state = ON_WAY
+            # I am moving to a target position
             direction = targetDir(self.__world, self.__ant.pos(), self.__targetpos)
 
         # check direction
-        if direction == -1:
-            self.__regsteps = 0
-            self.__negsteps += 1
-            direction = randomDir(self.__world, self.__ant.pos())
-        else:
-            self.__regsteps += 1
-            if self.__regsteps == 4:
-                self.__negsteps = 0
-        # direction = rotateDir(self.__world, self.__ant.pos(), direction)
+        if direction ==  -1:
+            print("Why direction -1 with ant state \"{}\"?".format(STATES[self.__state]))
+            # if no more pheromone...
+            if self.__state == ON_PHEROMONE:
+                print("Fail to follow pheromone... I choose a random direction!")
+                direction = randomDir(self.__world, self.__ant.pos())
 
-        # move ant in the selected direction
-        self.__ant.move(direction)
-
-        return self.__ant.onFood()
+        return direction
 
     ### back home ###
     def backHome(self):
         self.__mode = BACK
         direction = -1
         self.__targetpos = None
-        direction = targetDir(self.__world, self.__ant.pos(), self.__ant.home())
+        direction = targetDir(
+            self.__world, self.__ant.pos(), self.__ant.home())
+        return direction
 
-        if direction == -1:
-            # print("I am back to home, but I need an escape!!!")
-            self.__regsteps = 0
-            self.__negsteps += 1
-            direction = randomDir(self.__world, self.__ant.pos())
-        else:
-            self.__regsteps += 1
-            if self.__regsteps == 4:
-                self.__negsteps = 0
-
-        # move your body
-        if self.__ant.move(direction):
-            self.__ant.dropPheromone()
-
-        return self.__ant.atHome()
 
     ### search escape ###
     def searchEscape(self):
         self.__mode = ESCAPE
         direction = -1
-
-        if self.__escsteps == 0 or self.__targetpos == None: # or self.__targetpos == self.__ant.pos():
-            self.__targetpos = randomPos(self.__world)
-
+        if self.__steps == 0:
+            self.__targetpos = randomTargetPos(self.__world, self.__ant.pos())
         direction = targetDir(self.__world, self.__ant.pos(), self.__targetpos)
+        return direction
 
-        # if direction == -1:
-        #     self.__targetpos = None
-        #     print("I need a better escape !!!!")
-
-        # direction = rotateDir(self.__world, self.__ant.pos(), direction)
-
-        if direction == -1:
-            direction = randomDir(self.__world, self.__ant.pos())
-
-        # move your body
-        self.__ant.move(direction)
-        self.__escsteps += 1
-
-        if self.__escsteps == MAX_STEP:
+    def endEscape(self):
+        if self.__steps == MAX_ESCAPE_STEPS:
             return True
-
         return False
-
 
     def act(self):
 
+        # save last position
+        self.__lastpos = self.__ant.pos()
+
         # seach mode
         if self.__mode == SEARCH:
-            if self.searchFood():
-                self.__ant.takeFood()
-                self.__mode = BACK
-            elif self.__negsteps >= 4:
-                print("I need to escape !!!")
-                self.__escsteps = 0
-                self.__mode = ESCAPE
-            return
+            direction = self.searchFood()
+            if self.__ant.move(direction):
+                self.__steps += 1
+                if self.__ant.onFood():
+                    self.__ant.takeFood()
+                    self.setMode(BACK)
+            else:
+                # self.setMode(ESCAPE)
+                print("oups, I cannot move in this direction...")
+                self.setMode(SEARCH)
 
         # back mode
-        if self.__mode == BACK:
-            if self.backHome():
-                self.__ant.releaseFood()
-                self.__mode = SEARCH
-            elif self.__negsteps >= 4:
-                print("I need to escape !!!")
-                self.__escsteps = 0
-                self.__mode = ESCAPE
-            return
+        elif self.__mode == BACK:
+            direction = self.backHome()
+            if self.__ant.move(direction):
+                self.__steps += 1
+                if self.__enabledrop:
+                    self.__ant.dropPheromone()
+                if self.__ant.atHome():
+                    self.__ant.releaseFood()
+                    self.setMode(SEARCH)
+            else:
+                self.setMode(ESCAPE)
 
         # escape mode
-        if self.__mode == ESCAPE:
-            if self.searchEscape():
-                self.__escsteps = 0
-                self.__negsteps = 0
-                self.__regsteps = 0
-                if self.__ant.food() > 0:
-                    self.__mode = BACK
-                else:
-                    self.__mode = SEARCH
-            return
+        elif self.__mode == ESCAPE:
+            direction = self.searchEscape()
+            if self.__ant.move(direction):
+                self.__steps += 1
+                if(self.endEscape()):
+                    if self.__ant.food() > 0:
+                        self.__enabledrop = False # disable pheromone drop
+                        self.setMode(BACK)
+                    else:
+                        self.__enabledrop = True # enable pheromone drop
+                        self.setMode(SEARCH)
+            else:
+                self.setMode(ESCAPE)    # try to escape again
+
 
 ### Class Ant ###
 
@@ -241,6 +247,7 @@ class Ant:
         self.__brain.act()
 
 ### Class AntColony ###
+
 
 class AntColony:
     def __init__(self, world, pos=None):
