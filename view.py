@@ -34,6 +34,7 @@ RED = color2rgb("red")
 MAGENTA = color2rgb("magenta")
 WHITE = color2rgb("white")
 BLACK = color2rgb("black")
+GRAY = color2rgb("gray")
 
 # COLOR1 = colour.Color("gold")
 # COLOR2 = colour.Color("orangered")
@@ -86,16 +87,16 @@ class GraphicView:
                         (x*PIXELSIZE, y*PIXELSIZE), (PIXELSIZE, PIXELSIZE)))
         # draw colony home
         for colony in self.__world.getColonies():
-            colonypos = colony.pos()
-            pygame.draw.rect(self.__win, GREEN, pygame.Rect(
+            colonypos = colony.getPos()
+            pygame.draw.rect(self.__win, GRAY, pygame.Rect(
                 (colonypos[0]*PIXELSIZE, colonypos[1]*PIXELSIZE), (PIXELSIZE, PIXELSIZE)))
 
     def renderAnts(self):
         for colony in self.__world.getColonies():
             ants = colony.getAnts()
             for ant in ants:
-                antpos = ant.pos()
-                antcolor = BLUE
+                antpos = ant.getPos()
+                antcolor = color2rgb(colony.getColor())
                 # if ant.brain().mode() == SEARCH:
                 #     antcolor = BLUE
                 # elif ant.brain().mode() == ESCAPE:

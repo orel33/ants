@@ -16,17 +16,17 @@ class Ant:
     def __init__(self, world, colony):
         self.__world = world
         self.__colony = colony
-        self.__pos = colony.pos()
+        self.__pos = colony.getPos()
         self.__brain = Brain(world, colony, self)
         self.__food = 0
 
-    def brain(self):
+    def getBrain(self):
         return self.__brain
 
-    def pos(self):
+    def getPos(self):
         return self.__pos
 
-    def food(self):
+    def getFood(self):
         return self.__food
 
     def move(self, direction):
@@ -63,10 +63,10 @@ class Ant:
         return False
 
     def atHome(self):
-        return (self.__pos == self.__colony.pos())
+        return (self.__pos == self.__colony.getPos())
 
-    def home(self):
-        return self.__colony.pos()
+    def getHomePos(self):
+        return self.__colony.getPos()
 
     def takeFood(self):
         if(self.__food < FOOD_CAPACITY and self.onFood()):
@@ -95,24 +95,21 @@ class Ant:
     def update(self, dt):
         self.__brain.act()
 
-### Class AntColony ###
+### Class Colony ###
 
+class Colony:
 
-class AntColony:
-    def __init__(self, world, pos=None):
+    def __init__(self, world, pos, color="blue"):
         self.__world = world
-        if pos == None:
-            pos = (int(world.width()/2), int(world.height()/2))
+        self.__color = color
         self.__pos = pos
         self.__ants = []
         self.__food = 0
-        print("=> add colony home at position ({},{})".format(
-            pos[0], pos[1]))
 
-    def pos(self):
+    def getPos(self):
         return self.__pos
 
-    def food(self):
+    def getFood(self):
         return self.__food
 
     def addFood(self, level=1):
@@ -129,6 +126,9 @@ class AntColony:
     def addAnts(self, nb):
         for _ in range(nb):
             self.addAnt()
+
+    def getColor(self):
+        return self.__color
 
     def update(self, dt):
         for ant in self.__ants:

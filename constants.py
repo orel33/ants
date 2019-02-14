@@ -3,6 +3,8 @@
 
 ### Constants ###
 
+DEBUG = 0
+
 # This array contains the 8 directions. They are clockwise
 # ordered. Direction 0 corresponds to going up and to the left.
 DIRS = [(-1, -1), (0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0)]

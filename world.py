@@ -20,6 +20,7 @@ class World:
         self.__food = numpy.zeros((height, width), dtype=int)
         self.__pheromone = numpy.zeros((height, width), dtype=int)
         self.__colonies = []
+        print("=> create new world {}x{}".format(width, height))
 
     def width(self):
         return self.__width
@@ -91,10 +92,12 @@ class World:
     def getColonies(self):
         return self.__colonies
 
-    def addColony(self, nbants=100, pos=None):
-        colony = AntColony(self, pos)
+    def addColony(self, pos, nbants, color):
+        print("=> add colony {} of {} ants at position ({},{})".format(color, nbants, pos[0], pos[1]))
+        colony = Colony(self, pos, color)
         colony.addAnts(nbants)
         self.__colonies.append(colony)
+        return colony
 
     # update world at each clock tick
     def update(self, dt):

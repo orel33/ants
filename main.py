@@ -10,9 +10,8 @@ import sys
 import pygame
 
 ### python version ###
-print("python version: {}.{}.{}".format(
-    sys.version_info[0], sys.version_info[1], sys.version_info[2]))
-print("pygame version: ", pygame.version.ver)
+debug("python version: {}.{}.{}".format(sys.version_info[0], sys.version_info[1], sys.version_info[2]))
+debug("pygame version: {}".format(pygame.version.ver))
 
 ################################################################################
 #                                 MAIN                                         #
@@ -50,7 +49,8 @@ world.addFood((0, 0), (20, 20))
 world.addFood((width-20, 0), (20, 20))
 world.addFood((0, height-20), (20, 20))
 world.addFood((width-20, height-20), (20, 20))
-world.addColony(nbants)
+colony1 = world.addColony((int(width/2), int(height/2)), 10, "blue")
+colony2 = world.addColony((int(width/2)+20, int(height/2)-20), 10, "magenta")
 
 kb = KeyboardController()
 view = GraphicView(world)
@@ -63,7 +63,9 @@ while True:
         break
     world.update(dt)
     turn += 1
-    # print("{} {}".format(turn, colony.food()))
+    if turn % 10 == 0:
+        print("{} {} {}".format(turn, colony1.getColor(), colony1.getFood()))
+        print("{} {} {}".format(turn, colony2.getColor(), colony2.getFood()))
     view.update(dt)
 
 # quit
