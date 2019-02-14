@@ -1,19 +1,40 @@
 # -*- coding: Utf-8 -*
 # Author: aurelien.esnard@u-bordeaux.fr
 
-from constants import *
 from geom import *
-from world import *
-from ants import *
+from misc import *
+
+import world
+import ants
+
 import random
 import numpy
 import math
 
-def debug(value):
-    if DEBUG == 1:
-        debug(value)
+### Constants ###
 
-### Class AntBrain ###
+MAX_ESCAPE_STEPS = 20
+LOCAL_SEARCH_DIST = 4
+
+# ant brain mode 
+SEARCH = 0
+BACK = 1
+ESCAPE = 2
+
+# ant states
+UNDEFINED = 0
+FIRST_STEP = 1
+NEAR_FOOD = 2
+ON_PHEROMONE = 3
+NEAR_PHEROMONE = 4
+TARGET_REACHED = 5
+NO_TARGET = 6
+ON_WAY = 7
+
+STATES = ["undefined", "first step", "near food", "on pheromone", "near pheromone", "target reached", "no target", "on way"]
+
+
+### Class Brain ###
 
 class Brain:
 
@@ -27,7 +48,6 @@ class Brain:
         self.__lastpos = None       # last ant position
         self.__targetpos = None     # set target position
         self.__enabledrop = True    # enable to drop pheromone (or not)
-
 
     def mode(self):
         return self.__mode
@@ -52,14 +72,12 @@ class Brain:
         elif self.__ant.onPheromone():
             self.__state = ON_PHEROMONE
             self.__targetpos = None
-            direction = pheromoneDir(
-                self.__world, self.__ant.getPos(), self.__ant.getHomePos(), True)
+            direction = pheromoneDir(self.__world, self.__ant.getPos(), self.__ant.getHomePos(), True)
             debug("I follow pheromone in direction {}".format(direction))
         elif self.__ant.nearPheromone():
             self.__state = NEAR_PHEROMONE
             self.__targetpos = None
-            direction = pheromoneDir(
-                self.__world, self.__ant.getPos(), self.__ant.getHomePos(), False)
+            direction = pheromoneDir(self.__world, self.__ant.getPos(), self.__ant.getHomePos(), False)
             debug("I'am near pheromone in direction {}".format(direction))
         # global search
         elif self.__steps == 0:
@@ -85,7 +103,7 @@ class Brain:
             direction = targetDir(self.__world, self.__ant.getPos(), self.__targetpos)
 
         # check direction
-        if direction ==  -1:
+        if direction == -1:
             debug("Why direction -1 with ant state \"{}\"?".format(STATES[self.__state]))
             # if no more pheromone...
             if self.__state == ON_PHEROMONE:
@@ -99,12 +117,11 @@ class Brain:
         self.__mode = BACK
         direction = -1
         self.__targetpos = None
-        direction = targetDir(
-            self.__world, self.__ant.getPos(), self.__ant.getHomePos())
+        direction = targetDir(self.__world, self.__ant.getPos(), self.__ant.getHomePos())
         return direction
 
-
     ### search escape ###
+
     def searchEscape(self):
         self.__mode = ESCAPE
         direction = -1
@@ -156,11 +173,10 @@ class Brain:
                 self.__steps += 1
                 if(self.endEscape()):
                     if self.__ant.getFood() > 0:
-                        self.__enabledrop = False # disable pheromone drop
+                        self.__enabledrop = False  # disable pheromone drop
                         self.setMode(BACK)
                     else:
-                        self.__enabledrop = True # enable pheromone drop
+                        self.__enabledrop = True  # enable pheromone drop
                         self.setMode(SEARCH)
             else:
                 self.setMode(ESCAPE)    # try to escape again
-

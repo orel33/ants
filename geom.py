@@ -2,14 +2,20 @@
 # Author: aurelien.esnard@u-bordeaux.fr
 
 from constants import *
-from world import *
-from ants import *
+import world
+import ants
 
 import numpy
 import random
 import sys
 import math
 import bresenham
+
+### Constants ###
+
+PROBA = [1/2, 1/4, 1/8, 1/8, 0]
+PROBASUM = [0.5, 0.75, 0.875, 1.0, 1.0]
+NBTRIES = 5
 
 ### Geometry Functions ###
 
@@ -20,7 +26,7 @@ def distance(pos0, pos1):
 
 
 def isValidDir(world, antpos, antdir):
-    newpos = (antpos[0] + DIRS[antdir][0], antpos[1] + DIRS[antdir][1])
+    newpos = world.getNeighbor(antpos, antdir)
     if world.isValidPos(newpos):
         return True
     return False
@@ -35,12 +41,10 @@ def targetDir(world, antpos, targetpos):
         nextpos = next(b)
     # find direction
     bestdir = -1
-    for i in range(NBDIRS):
-        neighborpos = (antpos[0] + DIRS[i][0], antpos[1] + DIRS[i][1])
-        if not world.isValidPos(neighborpos):
-            continue
-        if nextpos == neighborpos:
-            bestdir = i
+    for direction in world.getNeighbors(antpos, onlyvalid=True, returndir=True):
+        pos = world.getNeighbor(antpos, direction)
+        if nextpos == pos:
+            bestdir = direction
             break
     return bestdir
 
@@ -61,10 +65,10 @@ def rotateDir(world, antpos, antdir):
 
 
 def randomDir(world, antpos):
-    while True:
-        direction = random.randint(0, NBDIRS - 1)
-        newpos = (antpos[0] + DIRS[direction][0],
-                  antpos[1] + DIRS[direction][1])
+    direction = -1
+    for _ in range(NBTRIES):
+        direction = random.randint(0, NBDIRS-1)
+        newpos = world.getNeighbor(antpos, direction)
         if(world.isValidPos(newpos)):
             break
     return direction
@@ -74,42 +78,40 @@ def pheromoneDir(world, antpos, homepos, optdist):
     antdist = distance(homepos, antpos)
     maxpheromone = 0
     bestdir = -1
-    for i in range(NBDIRS):
-        neighborpos = (antpos[0] + DIRS[i][0], antpos[1] + DIRS[i][1])
-        if not world.isValidPos(neighborpos):
-            continue
+    for direction in world.getNeighbors(antpos, onlyvalid=True, returndir=True):
+        neighborpos = world.getNeighbor(antpos, direction)
         pheromone = world.getPheromone(neighborpos)
         neighbordist = distance(homepos, neighborpos)
         if((not optdist) and (pheromone > maxpheromone)):
             maxpheromone = pheromone
-            bestdir = i
+            bestdir = direction
         if(optdist and (pheromone > maxpheromone) and (neighbordist > antdist)):
             maxpheromone = pheromone
-            bestdir = i
+            bestdir = direction
     return bestdir
+
 
 def foodDir(world, antpos):
     maxfood = 0
     bestdir = -1
-    for i in range(NBDIRS):
-        neighborpos = (antpos[0] + DIRS[i][0], antpos[1] + DIRS[i][1])
-        if not world.isValidPos(neighborpos):
-            continue
+    for direction in world.getNeighbors(antpos, onlyvalid=True, returndir=True):
+        neighborpos = world.getNeighbor(antpos, direction)
         food = world.getFood(neighborpos)
         if(food > maxfood):
             maxfood = food
-            bestdir = i
+            bestdir = direction
     return bestdir
 
-def randomTargetPos(world, antpos, dist = 0):
+def randomTargetPos(world, antpos, dist=0):
     if dist == 0:
-        dist = max(world.width(),world.height())
-    while True:
+        dist = max(world.width(), world.height())
+    for _ in range(NBTRIES):
         dx = random.randint(-dist, dist)
         dy = random.randint(-dist, dist)
         if dx != 0 and dy != 0:
             break
     return (antpos[0] + dx, antpos[1] + dy)
+
 
 def randomPos(world):
     while True:

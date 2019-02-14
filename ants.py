@@ -2,14 +2,14 @@
 # Author: aurelien.esnard@u-bordeaux.fr
 
 from constants import *
-from world import *
-from brain import *
+import world
+import brain
 import random
 import numpy
 import math
 
-
 ### Class Ant ###
+
 
 class Ant:
 
@@ -17,7 +17,7 @@ class Ant:
         self.__world = world
         self.__colony = colony
         self.__pos = colony.getPos()
-        self.__brain = Brain(world, colony, self)
+        self.__brain = brain.Brain(world, colony, self)
         self.__food = 0
 
     def getBrain(self):
@@ -30,11 +30,9 @@ class Ant:
         return self.__food
 
     def move(self, direction):
-        if direction not in range(NBDIRS):
+        if direction == -1:
             return False
-        newposx = self.__pos[0] + DIRS[direction][0]
-        newposy = self.__pos[1] + DIRS[direction][1]
-        newpos = (newposx, newposy)
+        newpos = self.__world.getNeighbor(self.__pos, direction)
         if not self.__world.isValidPos(newpos):
             return False
         self.__pos = newpos
@@ -47,18 +45,14 @@ class Ant:
         return (self.__world.getPheromone(self.__pos) > 0)
 
     def nearFood(self):
-        for i in range(NBDIRS):
-            neighborpos = (self.__pos[0] + DIRS[i][0],
-                           self.__pos[1] + DIRS[i][1])
-            if self.__world.isValidPos(neighborpos) and self.__world.getFood(neighborpos) > 0:
+        for pos in self.__world.getNeighbors(self.__pos, onlyvalid=True):
+            if self.__world.getFood(pos) > 0:
                 return True
         return False
 
     def nearPheromone(self):
-        for i in range(NBDIRS):
-            neighborpos = (self.__pos[0] + DIRS[i][0],
-                           self.__pos[1] + DIRS[i][1])
-            if self.__world.isValidPos(neighborpos) and self.__world.getPheromone(neighborpos) > 0:
+        for pos in self.__world.getNeighbors(self.__pos, onlyvalid=True):
+            if self.__world.getPheromone(pos) > 0:
                 return True
         return False
 
@@ -86,16 +80,14 @@ class Ant:
 
     def dropPheromone(self):
         self.__world.addPheromone(self.__pos, PHEROMONE_DROP/2)
-        for i in range(NBDIRS):
-            neighborpos = (self.__pos[0] + DIRS[i][0],
-                           self.__pos[1] + DIRS[i][1])
-            if self.__world.isValidPos(neighborpos):
-                self.__world.addPheromone(neighborpos, PHEROMONE_DROP/16)
+        for pos in self.__world.getNeighbors(self.__pos, onlyvalid=True):
+            self.__world.addPheromone(pos, PHEROMONE_DROP/16)
 
     def update(self, dt):
         self.__brain.act()
 
 ### Class Colony ###
+
 
 class Colony:
 

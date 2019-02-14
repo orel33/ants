@@ -2,72 +2,56 @@
 # -*- coding: Utf-8 -*
 # Author: aurelien.esnard@u-bordeaux.fr
 
-from world import *
-from view import *
-from keyboard import *
+import world
+import view
+import keyboard
+from misc import *
+from constants import *
 
 import sys
 import pygame
-
-### python version ###
-debug("python version: {}.{}.{}".format(sys.version_info[0], sys.version_info[1], sys.version_info[2]))
-debug("pygame version: {}".format(pygame.version.ver))
 
 ################################################################################
 #                                 MAIN                                         #
 ################################################################################
 
-width = 120
-height = 120
-turn = 0
-nbants = 100
+### python version ###
+debug("python version: {}.{}.{}".format(sys.version_info[0], sys.version_info[1], sys.version_info[2]))
+debug("pygame version: {}".format(pygame.version.ver))
 
-# parse arguments
-if len(sys.argv) == 1:
-    pass
-elif len(sys.argv) == 2:
-    turn = int(sys.argv[1])
-elif len(sys.argv) == 4:
-    turn = int(sys.argv[1])
-    width = int(sys.argv[2])
-    height = int(sys.argv[3])
-elif len(sys.argv) == 5:
-    turn = int(sys.argv[1])
-    width = int(sys.argv[2])
-    height = int(sys.argv[3])
-    nbants = int(sys.argv[4])
-else:
-    print("Usage: ./main.py [turn] [width height] [nbants]]")
+width = WIDTH
+height = HEIGHT
+nbants = NBANTS
 
 # initialization
 pygame.display.init()
 pygame.font.init()
 clock = pygame.time.Clock()
-world = World(width, height)
+world = world.World(width, height)
 world.addBlock((int(width/2)-20, int(height/2)+20), (40, 5))
 world.addFood((0, 0), (20, 20))
 world.addFood((width-20, 0), (20, 20))
 world.addFood((0, height-20), (20, 20))
 world.addFood((width-20, height-20), (20, 20))
-colony1 = world.addColony((int(width/2), int(height/2)), 10, "blue")
-colony2 = world.addColony((int(width/2)+20, int(height/2)-20), 10, "magenta")
+colony1 = world.addColony((int(width/2), int(height/2)), nbants, "blue")
+colony2 = world.addColony((int(width/2)+20, int(height/2)-20), nbants, "magenta")
 
-kb = KeyboardController()
-view = GraphicView(world)
+kb = keyboard.KeyboardController()
+gv = view.GraphicView(world)
 
 # main loop
+turn = 0
 while True:
     # make sure game doesn't run at more than FPS frames per second
-    dt = clock.tick(FPS)
+    dt = clock.tick(view.FPS)
     if not kb.tick(dt):
         break
     world.update(dt)
     turn += 1
-    if turn % 10 == 0:
-        print("{} {} {}".format(turn, colony1.getColor(), colony1.getFood()))
-        print("{} {} {}".format(turn, colony2.getColor(), colony2.getFood()))
-    view.update(dt)
+    gv.update(dt)
 
 # quit
+print("{} {} {}".format(turn, colony1.getColor(), colony1.getFood()))
+print("{} {} {}".format(turn, colony2.getColor(), colony2.getFood()))
 print("Game Over!")
 pygame.quit()

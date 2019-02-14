@@ -2,13 +2,12 @@
 # Author: aurelien.esnard@u-bordeaux.fr
 
 from constants import *
-from ants import *
+import ants
 
 import numpy
-
+import random
 
 ### Class world ###
-
 
 class World:
 
@@ -28,6 +27,23 @@ class World:
     def height(self):
         return self.__height
 
+    def getNeighbor(self, pos, direction):
+        return (pos[0] + DIRS[direction][0], pos[1] + DIRS[direction][1])
+
+    def getNeighbors(self, pos, shuffle=False, onlyvalid=False, returndir=False):
+        neighbors = []
+        for direction in range(NBDIRS):
+            neighborpos = self.getNeighbor(pos, direction)
+            if onlyvalid and not self.isValidPos(neighborpos):
+                continue
+            if returndir:
+                neighbors.append(direction)     # add neighbor direction
+            else:
+                neighbors.append(neighborpos)   # add neighbor position
+        if shuffle:
+            random.shuffle(neighbors)
+        return neighbors
+
     def isValidPos(self, pos):
         if pos[0] >= self.__width or pos[0] < 0 or pos[1] >= self.__height or pos[1] < 0:
             return False
@@ -46,29 +62,21 @@ class World:
     def getPheromone(self, pos):
         return self.__pheromone[pos[1]][pos[0]]
 
-    def addBlock(self, pos=None, dim=None):
-        if pos is None:
-            pos = randomPos(self)
-        if dim is None:
-            dim = (10, 10)
+    def addBlock(self, pos, dim):
         posx = pos[0]
         posy = pos[1]
         for y in range(dim[1]):
             for x in range(dim[0]):
                 self.__block[posy + y][posx + x] = 1
-        print("=> add block at position ({},{}) of dimension ({},{})".format(
-            pos[0], pos[1], dim[0], dim[1]))
+        print("=> add block at position ({},{}) of dimension ({},{})".format(pos[0], pos[1], dim[0], dim[1]))
 
     def addFood(self, pos, dim=(1, 1), level=1):
-        if pos is None:
-            pos = randomPos(self)
         if dim is None:
             dim = (10, 10)
         for y in range(dim[1]):
             for x in range(dim[0]):
                 self.__food[pos[1] + y][pos[0] + x] += level
-        print("=> add food at position ({},{}) of dimension ({},{})".format(
-            pos[0], pos[1], dim[0], dim[1]))
+        print("=> add food at position ({},{}) of dimension ({},{})".format(pos[0], pos[1], dim[0], dim[1]))
 
     def removeFood(self, pos, level=1):
         self.__food[pos[1]][pos[0]] -= level
@@ -94,7 +102,7 @@ class World:
 
     def addColony(self, pos, nbants, color):
         print("=> add colony {} of {} ants at position ({},{})".format(color, nbants, pos[0], pos[1]))
-        colony = Colony(self, pos, color)
+        colony = ants.Colony(self, pos, color)
         colony.addAnts(nbants)
         self.__colonies.append(colony)
         return colony

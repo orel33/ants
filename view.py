@@ -1,8 +1,8 @@
 # -*- coding: Utf-8 -*
 # Author: aurelien.esnard@u-bordeaux.fr
 
-from world import *
-from ants import *
+from constants import *
+import world
 import pygame
 import colour
 
@@ -76,20 +76,18 @@ class GraphicView:
         for y in range(self.__world.height()):
             for x in range(self.__world.width()):
                 if(self.__world.getFood((x, y)) > 0):
-                    pygame.draw.rect(self.__win, RED, pygame.Rect(
-                        (x*PIXELSIZE, y*PIXELSIZE), (PIXELSIZE, PIXELSIZE)))
+                    pygame.draw.rect(self.__win, RED, pygame.Rect((x*PIXELSIZE, y*PIXELSIZE), (PIXELSIZE, PIXELSIZE)))
                 elif(self.__world.isBlock((x, y))):
-                    pygame.draw.rect(self.__win, BLACK, pygame.Rect(
-                        (x*PIXELSIZE, y*PIXELSIZE), (PIXELSIZE, PIXELSIZE)))
+                    pygame.draw.rect(self.__win, BLACK, pygame.Rect((x*PIXELSIZE, y*PIXELSIZE), (PIXELSIZE, PIXELSIZE)))
                 elif(self.__world.getPheromone((x, y)) > 0):
                     color = self.getPheromoneColor((x, y))  # YELLOW
-                    pygame.draw.rect(self.__win, color, pygame.Rect(
-                        (x*PIXELSIZE, y*PIXELSIZE), (PIXELSIZE, PIXELSIZE)))
-        # draw colony home
+                    pygame.draw.rect(self.__win, color, pygame.Rect((x*PIXELSIZE, y*PIXELSIZE), (PIXELSIZE, PIXELSIZE)))
+
+    # draw colony home
+    def renderHome(self):
         for colony in self.__world.getColonies():
             colonypos = colony.getPos()
-            pygame.draw.rect(self.__win, GRAY, pygame.Rect(
-                (colonypos[0]*PIXELSIZE, colonypos[1]*PIXELSIZE), (PIXELSIZE, PIXELSIZE)))
+            pygame.draw.rect(self.__win, GREEN, pygame.Rect((colonypos[0]*PIXELSIZE, colonypos[1]*PIXELSIZE), (PIXELSIZE, PIXELSIZE)))
 
     def renderAnts(self):
         for colony in self.__world.getColonies():
@@ -97,18 +95,12 @@ class GraphicView:
             for ant in ants:
                 antpos = ant.getPos()
                 antcolor = color2rgb(colony.getColor())
-                # if ant.brain().mode() == SEARCH:
-                #     antcolor = BLUE
-                # elif ant.brain().mode() == ESCAPE:
-                #     antcolor = GREEN
-                # else:
-                #     antcolor = MAGENTA
-                pygame.draw.rect(self.__win, antcolor, pygame.Rect(
-                    (antpos[0]*PIXELSIZE, antpos[1]*PIXELSIZE), (PIXELSIZE, PIXELSIZE)))
+                pygame.draw.rect(self.__win, antcolor, pygame.Rect((antpos[0]*PIXELSIZE, antpos[1]*PIXELSIZE), (PIXELSIZE, PIXELSIZE)))
 
     # render PyGame graphic view at each clock tick
 
     def update(self, dt):
         self.renderWorld()
         self.renderAnts()
+        self.renderHome()
         pygame.display.flip()
