@@ -26,6 +26,7 @@ def color2rgb(colorstr):
 # https://pypi.org/project/colour/
 # https://www.w3.org/TR/css-color-3/#svg-color
 
+
 YELLOW = color2rgb("yellow")
 BLUE = color2rgb("blue")
 GREEN = color2rgb("limegreen")
@@ -47,9 +48,8 @@ COLORS = list(COLOR1.range_to(COLOR2, MAX_PHEROMONE))
 class GraphicView:
 
     # initialize PyGame graphic view
-    def __init__(self, world, colony):
+    def __init__(self, world):
         self.__world = world
-        self.__colony = colony
         self.__winwidth = world.width() * PIXELSIZE
         self.__winheight = world.height() * PIXELSIZE
         self.__win = pygame.display.set_mode(
@@ -85,26 +85,29 @@ class GraphicView:
                     pygame.draw.rect(self.__win, color, pygame.Rect(
                         (x*PIXELSIZE, y*PIXELSIZE), (PIXELSIZE, PIXELSIZE)))
         # draw colony home
-        colonypos = self.__colony.pos()
-        pygame.draw.rect(self.__win, GREEN, pygame.Rect(
-            (colonypos[0]*PIXELSIZE, colonypos[1]*PIXELSIZE), (PIXELSIZE, PIXELSIZE)))
+        for colony in self.__world.getColonies():
+            colonypos = colony.pos()
+            pygame.draw.rect(self.__win, GREEN, pygame.Rect(
+                (colonypos[0]*PIXELSIZE, colonypos[1]*PIXELSIZE), (PIXELSIZE, PIXELSIZE)))
 
     def renderAnts(self):
-        ants = self.__colony.getAnts()
-        for ant in ants:
-            antpos = ant.pos()
-            if ant.brain().mode() == SEARCH:
+        for colony in self.__world.getColonies():
+            ants = colony.getAnts()
+            for ant in ants:
+                antpos = ant.pos()
                 antcolor = BLUE
-            elif ant.brain().mode() == ESCAPE:
-                antcolor = GREEN
-            else:
-                antcolor = MAGENTA
-            pygame.draw.rect(self.__win, antcolor, pygame.Rect(
-                (antpos[0]*PIXELSIZE, antpos[1]*PIXELSIZE), (PIXELSIZE, PIXELSIZE)))
+                # if ant.brain().mode() == SEARCH:
+                #     antcolor = BLUE
+                # elif ant.brain().mode() == ESCAPE:
+                #     antcolor = GREEN
+                # else:
+                #     antcolor = MAGENTA
+                pygame.draw.rect(self.__win, antcolor, pygame.Rect(
+                    (antpos[0]*PIXELSIZE, antpos[1]*PIXELSIZE), (PIXELSIZE, PIXELSIZE)))
 
     # render PyGame graphic view at each clock tick
 
-    def tick(self, dt):
+    def update(self, dt):
         self.renderWorld()
         self.renderAnts()
         pygame.display.flip()

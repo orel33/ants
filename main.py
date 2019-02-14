@@ -3,9 +3,9 @@
 # Author: aurelien.esnard@u-bordeaux.fr
 
 from world import *
-from ants import *
 from view import *
 from keyboard import *
+
 import sys
 import pygame
 
@@ -50,11 +50,10 @@ world.addFood((0, 0), (20, 20))
 world.addFood((width-20, 0), (20, 20))
 world.addFood((0, height-20), (20, 20))
 world.addFood((width-20, height-20), (20, 20))
-colony = AntColony(world)
-colony.addAnts(nbants)
+world.addColony(nbants)
 
 kb = KeyboardController()
-view = GraphicView(world, colony)
+view = GraphicView(world)
 
 # main loop
 while True:
@@ -62,11 +61,10 @@ while True:
     dt = clock.tick(FPS)
     if not kb.tick(dt):
         break
-    world.tick(dt)
-    colony.tick(dt)
+    world.update(dt)
     turn += 1
-    print("{} {}".format(turn, colony.food()))
-    view.tick(dt)
+    # print("{} {}".format(turn, colony.food()))
+    view.update(dt)
 
 # quit
 print("Game Over!")
