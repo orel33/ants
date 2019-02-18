@@ -19,6 +19,7 @@ NBTRIES = 5
 
 ### Geometry Functions ###
 
+
 def distance(pos0, pos1):
     dx = pos1[0] - pos0[0]
     dy = pos1[1] - pos0[1]
@@ -102,15 +103,23 @@ def foodDir(world, antpos):
             bestdir = direction
     return bestdir
 
-def randomTargetPos(world, antpos, dist=0):
-    if dist == 0:
-        dist = max(world.width(), world.height())
+
+def randomTargetPos(world, antpos, mindist=0, maxdist=0):
+    if maxdist == 0:
+        maxdist = max(world.width(), world.height())
+    # if mindist < 0:
+    #     mindist = max(world.width(), world.height())
+    # if maxdist < 0:
+    #     maxdist = max(world.width(), world.height())+10
+    assert(mindist <= maxdist)
     for _ in range(NBTRIES):
-        dx = random.randint(-dist, dist)
-        dy = random.randint(-dist, dist)
+        sx = 2 * random.randint(0, 1) - 1
+        sy = 2 * random.randint(0, 1) - 1
+        dx = random.randint(mindist, maxdist)
+        dy = random.randint(mindist, maxdist)
         if dx != 0 and dy != 0:
             break
-    return (antpos[0] + dx, antpos[1] + dy)
+    return (antpos[0] + sx*dx, antpos[1] + sy*dy)
 
 
 def randomPos(world):
@@ -119,4 +128,3 @@ def randomPos(world):
         y = random.randint(0, world.height()-1)
         if world.isValidPos((x, y)):
             return (x, y)
-

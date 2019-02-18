@@ -49,9 +49,10 @@ while True:
     world.update(dt)
     turn += 1
     gv.update(dt)
+    if(turn % 10 == 0):
+        print("{} {} {}".format(turn, colony1.getColor(), colony1.getFood()))
+        print("{} {} {}".format(turn, colony2.getColor(), colony2.getFood()))
 
 # quit
-print("{} {} {}".format(turn, colony1.getColor(), colony1.getFood()))
-print("{} {} {}".format(turn, colony2.getColor(), colony2.getFood()))
 print("Game Over!")
 pygame.quit()
