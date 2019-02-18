@@ -10,6 +10,8 @@ from constants import *
 
 import sys
 import pygame
+import cProfile
+import pstats
 
 ################################################################################
 #                                 MAIN                                         #
@@ -22,6 +24,11 @@ debug("pygame version: {}".format(pygame.version.ver))
 width = WIDTH
 height = HEIGHT
 nbants = NBANTS
+nturns = NTURNS
+
+if len(sys.argv) == 2:
+    nturns = int(sys.argv[1])
+assert(nturns >= 0)
 
 # initialization
 pygame.display.init()
@@ -36,12 +43,16 @@ world.addFood((width-20, height-20), (20, 20))
 colony1 = world.addColony((int(width/2), int(height/2)), nbants, "blue")
 colony2 = world.addColony((int(width/2)+20, int(height/2)-20), nbants, "magenta")
 
-kb = keyboard.KeyboardController()
+kb = keyboard.KeyboardController(world)
 gv = view.GraphicView(world)
+
+
+cp = cProfile.Profile()
+cp.enable()
 
 # main loop
 turn = 0
-while True:
+while nturns == 0 or turn < nturns:
     # make sure game doesn't run at more than FPS frames per second
     dt = clock.tick(view.FPS)
     if not kb.tick(dt):
@@ -56,3 +67,12 @@ while True:
 # quit
 print("Game Over!")
 pygame.quit()
+
+# profiler
+cp.disable()
+# cp.print_stats()
+cp.dump_stats("mystats")
+p = pstats.Stats("mystats")
+p.strip_dirs()
+p.sort_stats("cumulative").print_stats(20)
+p.sort_stats("time").print_stats(10)

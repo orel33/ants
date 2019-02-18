@@ -15,32 +15,35 @@ import colour
 PIXELSIZE = 4
 FPS = 10
 WIN_TITLE = "Ant Simulator"
+MAX_PHEROMONE_COLORS = 10
 
 ### Colors ###
 
-
-def color2rgb(colorstr):
+def colorstr2rgb(colorstr):
     color = colour.Color(colorstr)
+    return (int(color.red*255), int(color.green*255), int(color.blue*255))
+
+def color2rgb(color):
     return (int(color.red*255), int(color.green*255), int(color.blue*255))
 
 # https://pypi.org/project/colour/
 # https://www.w3.org/TR/css-color-3/#svg-color
 
 
-YELLOW = color2rgb("yellow")
-BLUE = color2rgb("blue")
-GREEN = color2rgb("limegreen")
-RED = color2rgb("red")
-MAGENTA = color2rgb("magenta")
-WHITE = color2rgb("white")
-BLACK = color2rgb("black")
-GRAY = color2rgb("gray")
+YELLOW = colorstr2rgb("yellow")
+GOLD = colorstr2rgb("gold")
+BLUE = colorstr2rgb("blue")
+GREEN = colorstr2rgb("limegreen")
+RED = colorstr2rgb("red")
+MAGENTA = colorstr2rgb("magenta")
+WHITE = colorstr2rgb("white")
+BLACK = colorstr2rgb("black")
+GRAY = colorstr2rgb("gray")
 
-# COLOR1 = colour.Color("gold")
-# COLOR2 = colour.Color("orangered")
 COLOR1 = colour.Color("yellow")
 COLOR2 = colour.Color("gold")
-COLORS = list(COLOR1.range_to(COLOR2, MAX_PHEROMONE))
+COLORS = list(COLOR1.range_to(COLOR2, MAX_PHEROMONE_COLORS))
+RGBS = [color2rgb(c) for c in COLORS]
 
 
 ### class GraphicView ###
@@ -60,14 +63,16 @@ class GraphicView:
         # self.font = pygame.font.SysFont('Consolas', 20)
 
     def getPheromoneColor(self, pos):
-        level = self.__world.getPheromone(pos)
-        if(level == 0):
-            return WHITE
-        if(level >= MAX_PHEROMONE):
-            color = COLOR2
+        level = self.__world.getPheromone(pos)  # in range(0,MAX_PHEROMONE)
+        colorlevel = int(level * MAX_PHEROMONE_COLORS / MAX_PHEROMONE)
+        if(colorlevel <= 0):
+            color = WHITE
+        elif(colorlevel >= MAX_PHEROMONE_COLORS):
+            color = GOLD
         else:
-            color = COLORS[level]
-        return (int(color.red*255), int(color.green*255), int(color.blue*255))
+            color = RGBS[colorlevel]
+            # color = YELLOW
+        return color
 
     # render world
     def renderWorld(self):
@@ -80,7 +85,7 @@ class GraphicView:
                 elif(self.__world.isBlock((x, y))):
                     pygame.draw.rect(self.__win, BLACK, pygame.Rect((x*PIXELSIZE, y*PIXELSIZE), (PIXELSIZE, PIXELSIZE)))
                 elif(self.__world.getPheromone((x, y)) > 0):
-                    color = self.getPheromoneColor((x, y))  # YELLOW
+                    color = self.getPheromoneColor((x, y))
                     pygame.draw.rect(self.__win, color, pygame.Rect((x*PIXELSIZE, y*PIXELSIZE), (PIXELSIZE, PIXELSIZE)))
 
     # draw colony home
@@ -92,9 +97,9 @@ class GraphicView:
     def renderAnts(self):
         for colony in self.__world.getColonies():
             ants = colony.getAnts()
+            antcolor = colorstr2rgb(colony.getColor())
             for ant in ants:
                 antpos = ant.getPos()
-                antcolor = color2rgb(colony.getColor())
                 pygame.draw.rect(self.__win, antcolor, pygame.Rect((antpos[0]*PIXELSIZE, antpos[1]*PIXELSIZE), (PIXELSIZE, PIXELSIZE)))
 
     # render PyGame graphic view at each clock tick

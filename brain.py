@@ -33,10 +33,7 @@ class Brain:
         self.__mode = SEARCH        # current mode in [SEARCH, BACK, ESCAPE]
         self.__steps = 0            # nb steps done in current mode
         self.__targetpos = None     # set target position
-        # self.__searchdist = 0       # local search dist vs global search (0)
-        # self.__searchsteps = 0      # search steps (0 is infinite)
         self.__escape = False       # escape
-        # self.__enabledrop = True    # enable to drop pheromone (or not)
 
     def mode(self):
         return self.__mode
@@ -124,18 +121,17 @@ class Brain:
                     self.__ant.takeFood()
                     self.setMode(BACK)
             else:
-                debug("oups, I cannot move in this direction...")
+                print("Oups, I cannot move in this direction!?")
 
         # back mode
         elif self.__mode == BACK:
             direction = self.backHome()
             if self.__ant.move(direction):
                 self.__steps += 1
-                # if self.__enabledrop:
                 self.__ant.dropPheromone()
                 if self.__ant.atHome():
                     self.__ant.releaseFood()
                     self.setMode(SEARCH)
             else:
-                debug("oups, I cannot move in this direction...")
+                print("Oups, I cannot move in this direction!?")
 

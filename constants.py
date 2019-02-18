@@ -20,6 +20,7 @@ STRDIRS = ["NW", "N", "NE", "E", "SE", "S", "SW", "W"]
 WIDTH = 120
 HEIGHT = 120
 NBANTS = 100
+NTURNS = 0      # infinite turns
 
 ### Ant Parameters ###
 

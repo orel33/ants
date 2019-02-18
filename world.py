@@ -9,10 +9,12 @@ import random
 
 ### Class world ###
 
+
 class World:
 
     # initialize world
     def __init__(self, width, height):
+        self.__pause = False
         self.__width = width
         self.__height = height
         self.__block = numpy.zeros((height, width), dtype=int)
@@ -20,6 +22,12 @@ class World:
         self.__pheromone = numpy.zeros((height, width), dtype=int)
         self.__colonies = []
         print("=> create new world {}x{}".format(width, height))
+
+    def pauseresume(self):
+        if self.__pause:
+            self.__pause = False
+        else:
+            self.__pause = True
 
     def width(self):
         return self.__width
@@ -30,11 +38,11 @@ class World:
     def getNeighbor(self, pos, direction):
         return (pos[0] + DIRS[direction][0], pos[1] + DIRS[direction][1])
 
-    def getNeighbors(self, pos, shuffle=False, onlyvalid=False, returndir=False):
+    def getNeighbors(self, pos, shuffle=False, onlyvalid=False, allowblock=False, allowfood=True, returndir=False):
         neighbors = []
         for direction in range(NBDIRS):
             neighborpos = self.getNeighbor(pos, direction)
-            if onlyvalid and not self.isValidPos(neighborpos):
+            if onlyvalid and not self.isValidPos(neighborpos, allowblock, allowfood):
                 continue
             if returndir:
                 neighbors.append(direction)     # add neighbor direction
@@ -44,10 +52,15 @@ class World:
             random.shuffle(neighbors)
         return neighbors
 
-    def isValidPos(self, pos):
+    def isValidPos(self, pos, allowblock=False, allowfood=True):
+        # check position is valid
         if pos[0] >= self.__width or pos[0] < 0 or pos[1] >= self.__height or pos[1] < 0:
             return False
-        if self.isBlock(pos):
+        # check block
+        if allowblock == False and self.isBlock(pos):
+            return False
+        # check food
+        if allowfood == False and (self.getFood(pos) > 0):
             return False
         return True
 
@@ -97,6 +110,12 @@ class World:
                 if self.__pheromone[y][x] <= 0:
                     self.__pheromone[y][x] = 0
 
+    # def decayPheromone2(self):
+    #     for cell in numpy.nditer(self.__pheromone, op_flags=['readwrite']):
+    #         cell -= DECAY_PHEROMONE
+    #         if cell <= 0:
+    #             cell = 0
+
     def getColonies(self):
         return self.__colonies
 
@@ -110,5 +129,7 @@ class World:
     # update world at each clock tick
     def update(self, dt):
         self.decayPheromone()
+        if self.__pause:
+            return
         for colony in self.__colonies:
             colony.update(dt)

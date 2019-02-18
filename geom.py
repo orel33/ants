@@ -42,7 +42,7 @@ def targetDir(world, antpos, targetpos):
         nextpos = next(b)
     # find direction
     bestdir = -1
-    for direction in world.getNeighbors(antpos, onlyvalid=True, returndir=True):
+    for direction in world.getNeighbors(antpos, onlyvalid=True, allowblock=False, allowfood=False, returndir=True):
         pos = world.getNeighbor(antpos, direction)
         if nextpos == pos:
             bestdir = direction
@@ -95,7 +95,7 @@ def pheromoneDir(world, antpos, homepos, optdist):
 def foodDir(world, antpos):
     maxfood = 0
     bestdir = -1
-    for direction in world.getNeighbors(antpos, onlyvalid=True, returndir=True):
+    for direction in world.getNeighbors(antpos, onlyvalid=True, allowfood=True, returndir=True):
         neighborpos = world.getNeighbor(antpos, direction)
         food = world.getFood(neighborpos)
         if(food > maxfood):
